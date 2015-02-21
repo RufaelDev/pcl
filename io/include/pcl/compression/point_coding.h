@@ -158,12 +158,33 @@ namespace pcl
             pointDiffDataVector_.push_back (diffZ);
           }
         }
+		/** \brief Encode differential point information for a subset of points from point cloud for centroid encoding
+          * \param indexVector_arg indices defining a subset of points from points cloud
+          * \param referencePoint_arg coordinates of reference point
+          * \param inputCloud_arg input point cloud
+		  * \author added to code of Julius Kammerl by Centrum Wiskunde Informatica
+          */
+        void
+        encodePoint (const double* referencePoint_arg, const PointT &idxPoint)
+		{
+			unsigned char diffX, diffY, diffZ;
 
-        /** \brief Decode differential point information
+            // differentially encode point coordinates and truncate overflow
+            diffX = static_cast<unsigned char> (max (-127, min<int>(127, static_cast<int> ((idxPoint.x - referencePoint_arg[0])  / pointCompressionResolution_))));
+            diffY = static_cast<unsigned char> (max (-127, min<int>(127, static_cast<int> ((idxPoint.y - referencePoint_arg[1])  / pointCompressionResolution_))));
+            diffZ = static_cast<unsigned char> (max (-127, min<int>(127, static_cast<int> ((idxPoint.z - referencePoint_arg[2])  / pointCompressionResolution_))));
+
+            // store information in differential point vector
+            pointDiffDataVector_.push_back (diffX);
+            pointDiffDataVector_.push_back (diffY);
+            pointDiffDataVector_.push_back (diffZ);
+		}
+        /** \brief Decode differential point information to support centroid encoding
           * \param outputCloud_arg output point cloud
           * \param referencePoint_arg coordinates of reference point
           * \param beginIdx_arg index indicating first point to be assiged with color information
           * \param endIdx_arg index indicating last point to be assiged with color information
+		  * \author added to code of Julius Kammerl by Centrum Wiskunde Informatica
           */
         void
         decodePoints (PointCloudPtr outputCloud_arg, const double* referencePoint_arg, std::size_t beginIdx_arg,
@@ -193,7 +214,28 @@ namespace pcl
             point.z = static_cast<float> (referencePoint_arg[2] + diffZ * pointCompressionResolution_);
           }
         }
+		/** \brief Decode differential point information
+          * \param outputCloud_arg output point cloud
+          * \param referencePoint_arg coordinates of reference point
+          * \param beginIdx_arg index indicating first point to be assiged with color information
+          * \param endIdx_arg index indicating last point to be assiged with color information
+          */
+		void
+        decodePoint (PointT &outputPoint, const double* referencePoint_arg)
+        {
+          // retrieve differential point information
+          const unsigned char& diffX = static_cast<unsigned char> (*(pointDiffDataVectorIterator_++));
+          const unsigned char& diffY = static_cast<unsigned char> (*(pointDiffDataVectorIterator_++));
+          const unsigned char& diffZ = static_cast<unsigned char> (*(pointDiffDataVectorIterator_++));
 
+           // retrieve point from point cloud
+          PointT& point = outputPoint;
+
+          // decode point position
+          point.x = static_cast<float> (referencePoint_arg[0] + diffX * pointCompressionResolution_);
+          point.y = static_cast<float> (referencePoint_arg[1] + diffY * pointCompressionResolution_);
+          point.z = static_cast<float> (referencePoint_arg[2] + diffZ * pointCompressionResolution_);
+        }
       protected:
         /** \brief Pointer to output point cloud dataset. */
         PointCloudPtr output_;

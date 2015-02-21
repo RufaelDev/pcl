@@ -266,7 +266,18 @@ namespace pcl
       compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&binary_tree_data_vector_size), sizeof (binary_tree_data_vector_size));
       compressed_point_data_len_ += entropy_coder_.encodeCharVectorToStream (binary_tree_data_vector_,
                                                                              compressed_tree_data_out_arg);
-
+      
+	  // centroids coding (new option added by CWI)
+	  // only use do_centroid_enDecoding when doVoxelGridEnDecoding = true!
+	  if(do_centroid_enDecoding_)
+	  {
+		// encode differential centroid information
+        std::vector<char>& point_diff_data_vector = centroid_coder_->getDifferentialDataVector ();
+        uint32_t point_diff_data_vector_size = point_diff_data_vector.size ();
+        compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&point_diff_data_vector_size), sizeof (uint32_t));
+        compressed_point_data_len_ += entropy_coder_.encodeCharVectorToStream (point_diff_data_vector, compressed_tree_data_out_arg);
+	  }
+	  
       if (cloud_with_color_)
       {
         // encode averaged voxel color information
@@ -326,7 +337,18 @@ namespace pcl
       binary_tree_data_vector_.resize (static_cast<std::size_t> (binary_tree_data_vector_size));
       compressed_point_data_len_ += entropy_coder_.decodeStreamToCharVector (compressed_tree_data_in_arg,
                                                                          binary_tree_data_vector_);
+      
+	  if(do_centroid_enDecoding_)
+	  {
+		uint32_t l_count;
 
+		// decode differential point information
+        std::vector<char>& pointDiffDataVector = centroid_coder_->getDifferentialDataVector ();
+        compressed_tree_data_in_arg.read (reinterpret_cast<char*> (&l_count), sizeof (uint32_t));
+        pointDiffDataVector.resize (static_cast<std::size_t> (l_count));
+        compressed_point_data_len_ += entropy_coder_.decodeStreamToCharVector (compressed_tree_data_in_arg,pointDiffDataVector);	
+	  }
+	  
       if (data_with_color_)
       {
         // decode averaged voxel color information
@@ -404,7 +426,8 @@ namespace pcl
         compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&octree_resolution), sizeof (octree_resolution));
         compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&color_bit_depth), sizeof (color_bit_depth));
         compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&point_resolution), sizeof (point_resolution));
-
+        compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&do_centroid_enDecoding_), sizeof (do_centroid_enDecoding_));
+		 
         // encode octree bounding box
         compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&min_x), sizeof (min_x));
         compressed_tree_data_out_arg.write (reinterpret_cast<const char*> (&min_y), sizeof (min_y));
@@ -451,7 +474,8 @@ namespace pcl
         compressed_tree_data_in_arg.read (reinterpret_cast<char*> (&octree_resolution), sizeof (octree_resolution));
         compressed_tree_data_in_arg.read (reinterpret_cast<char*> (&color_bit_depth), sizeof (color_bit_depth));
         compressed_tree_data_in_arg.read (reinterpret_cast<char*> (&point_resolution), sizeof (point_resolution));
-
+        compressed_tree_data_in_arg.read (reinterpret_cast<char*> (&do_centroid_enDecoding_), sizeof (do_centroid_enDecoding_));
+		
         // read octree bounding box
         compressed_tree_data_in_arg.read (reinterpret_cast<char*> (&min_x), sizeof (min_x));
         compressed_tree_data_in_arg.read (reinterpret_cast<char*> (&min_y), sizeof (min_y));
@@ -540,11 +564,23 @@ namespace pcl
       }
       else
       {
-        // calculate center of lower voxel corner
-        newPoint.x = static_cast<float> ((static_cast<double> (key_arg.x) + 0.5) * this->resolution_ + this->min_x_);
-        newPoint.y = static_cast<float> ((static_cast<double> (key_arg.y) + 0.5) * this->resolution_ + this->min_y_);
-        newPoint.z = static_cast<float> ((static_cast<double> (key_arg.z) + 0.5) * this->resolution_ + this->min_z_);
+	    if(do_centroid_enDecoding_)
+		{
+		  PointT centroid_point;
 
+		  // calculcate position of lower voxel corner
+		  lowerVoxelCorner[0] = static_cast<double> (key_arg.x) * this->resolution_ + this->min_x_;
+		  lowerVoxelCorner[1] = static_cast<double> (key_arg.y) * this->resolution_ + this->min_y_;
+		  lowerVoxelCorner[2] = static_cast<double> (key_arg.z) * this->resolution_ + this->min_z_;
+
+		  centroid_coder_->decodePoint(newPoint,lowerVoxelCorner);
+		}
+		else{
+        // calculate center of lower voxel corner
+          newPoint.x = static_cast<float> ((static_cast<double> (key_arg.x) + 0.5) * this->resolution_ + this->min_x_);
+          newPoint.y = static_cast<float> ((static_cast<double> (key_arg.y) + 0.5) * this->resolution_ + this->min_y_);
+          newPoint.z = static_cast<float> ((static_cast<double> (key_arg.z) + 0.5) * this->resolution_ + this->min_z_);
+        }
         // add point to point cloud
         output_->points.push_back (newPoint);
       }

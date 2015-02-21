@@ -108,7 +108,8 @@ namespace pcl
                                bool doVoxelGridDownDownSampling_arg = false,
                                const unsigned int iFrameRate_arg = 30,
                                bool doColorEncoding_arg = true,
-                               const unsigned char colorBitResolution_arg = 6) :
+                               const unsigned char colorBitResolution_arg = 6,
+							   bool doVoxelCentroidCoding_arg = false) :
           OctreePointCloud<PointT, LeafT, BranchT, OctreeT> (octreeResolution_arg),
           output_ (PointCloudPtr ()),
           binary_tree_data_vector_ (),
@@ -117,6 +118,7 @@ namespace pcl
           point_count_data_vector_iterator_ (),
           color_coder_ (),
           point_coder_ (),
+		  centroid_coder_(new PointCoding<PointT>()),
           entropy_coder_ (),
           do_voxel_grid_enDecoding_ (doVoxelGridDownDownSampling_arg), i_frame_rate_ (iFrameRate_arg),
           i_frame_counter_ (0), frame_ID_ (0), point_count_ (0), i_frame_ (true),
@@ -124,7 +126,7 @@ namespace pcl
           point_color_offset_ (0), b_show_statistics_ (showStatistics_arg), 
           compressed_point_data_len_ (), compressed_color_data_len_ (), selected_profile_(compressionProfile_arg),
           point_resolution_(pointResolution_arg), octree_resolution_(octreeResolution_arg),
-          color_bit_resolution_(colorBitResolution_arg),
+          color_bit_resolution_(colorBitResolution_arg),do_centroid_enDecoding_(doVoxelCentroidCoding_arg),
           object_count_(0)
         {
           initialization();
@@ -280,6 +282,9 @@ namespace pcl
         /** \brief Point coding instance */
         PointCoding<PointT> point_coder_;
 
+		/** \brief Point coding instance for encoding the centroids */
+        boost::shared_ptr<PointCoding<PointT>> centroid_coder_;
+		
         /** \brief Static range coder instance */
         StaticRangeCoder entropy_coder_;
 
@@ -309,7 +314,9 @@ namespace pcl
         const unsigned char color_bit_resolution_;
 
         std::size_t object_count_;
-
+		
+		// option to do centroid encoding
+        bool do_centroid_enDecoding_;
       };
 
     // define frame identifier
