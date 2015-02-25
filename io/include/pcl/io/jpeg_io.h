@@ -37,25 +37,28 @@
 
 #include <pcl/PCLImage.h>
 
-/**! 
+/**!
 \brief jpeg reading and writing for PCL
-\author Rufael Mekuria rufael.mekuria@cwi.nl 
+\author Rufael Mekuria rufael.mekuria@cwi.nl
 */
 
-namespace pcl{
-  
-  namespace io{
-  
+namespace pcl
+{
+
+  namespace io
+  {
+
     /** \brief Class for writing jpeg buffers and files */
-    class PCL_EXPORTS JPEGWriter{
-      public:
+    class PCL_EXPORTS JPEGWriter
+    {
+    public:
       /** \brief function for writing an image as a compressed JPEG buffer
       *  \param[in] im_in PCLImage input image
       *  \param[in] jpeg_out  vector<uint8_t> containing compressed jpeg data
       *  \param[in] quality quality value of jpeg to use (100 is best)
       *  \return  returns true when succesfull
       */
-      static bool 
+      static bool
       writeJPEG(const PCLImage &im_in, std::vector<uint8_t> &cdat, int quality = 75);
 
       /** \brief function for writing an image as a compressed JPEG buffer
@@ -64,13 +67,13 @@ namespace pcl{
       *  \param[in] quality quality value of jpeg to use (100 is best)
       *  \return  returns true when succesfull
       */
-      static bool 
+      static bool
       writeJPEG(const PCLImage &im_in, const std::string &file_name, int quality = 75);
-   
+
       /** \brief generic function compressed JPEG buffer
       *  \param[in] im_in PCLImage input image
-      *  \param[in] cdat  vector<uint8_t> 
-      *  \param[in] file_name  std::string 
+      *  \param[in] cdat  vector<uint8_t>
+      *  \param[in] file_name  std::string
       *  \param[in] quality quality value of jpeg to use (100 is best)
       *  \param[in] bool write file
       *  \return  returns true when succesfull
@@ -79,32 +82,33 @@ namespace pcl{
       writeJPEG(const PCLImage &im_in, std::vector<uint8_t> &cdat, const std::string &file_name, int quality, bool write_file);
     };
 
-	/** \brief Class for reading jpeg buffers and files */
-    class PCL_EXPORTS JPEGReader{
-	  public:
-	  /** \brief function for reading a compressed JPEG buffer as a PCL image
-      *  \param[in] jpeg_in_dat  vector<uint8_t> containing compressed jpeg
-      *  \param[in] im_out PCLImage output image
-	  *  \return  returns true when succesfull
-      */
-	  static bool
-	  readJPEG(const std::vector<uint8_t> &jpeg_in_dat, PCLImage &im_out);
+    /** \brief Class for reading jpeg buffers and files */
+    class PCL_EXPORTS JPEGReader
+    {
+    public:
+      /** \brief function for reading a compressed JPEG buffer as a PCL image
+        *  \param[in] jpeg_in_dat  vector<uint8_t> containing compressed jpeg
+        *  \param[in] im_out PCLImage output image
+      *  \return  returns true when succesfull
+        */
+      static bool
+      readJPEG(const std::vector<uint8_t> &jpeg_in_dat, PCLImage &im_out);
 
       /** \brief function for reading a compressed JPEG file as a PCL image
       *   \param[in] jpeg_in_file  string filename with compressed jpeg image
-	  *   \param[in] im_out PCLImage output image
+      *   \param[in] im_out PCLImage output image
       *   \return  returns true when succesfull
       */
       static bool
       readJPEG(const std::string &jpeg_in_file, PCLImage &im_out);
 
-	  /** \brief helper function for reading a compressed JPEG buffer/file as a PCL image
-	  *   \param[in] jpeg_in_dat   characters  with compressed jpeg image
-      *   \param[in] jpeg_in_file  string filename with compressed jpeg image
-      *   \param[in] read_file bool  read file or from mem buffer	  
-	  *   \param[in] im_out PCLImage output image
-      *   \return  returns true when succesfull
-      */
+      /** \brief helper function for reading a compressed JPEG buffer/file as a PCL image
+      *   \param[in] jpeg_in_dat   characters  with compressed jpeg image
+        *   \param[in] jpeg_in_file  string filename with compressed jpeg image
+        *   \param[in] read_file bool  read file or from mem buffer
+      *   \param[in] im_out PCLImage output image
+        *   \return  returns true when succesfull
+        */
       static bool
       readJPEG(const std::vector<uint8_t> &jpeg_in_dat, const std::string &jpeg_in_file, bool read_file, PCLImage &im_out);
     };

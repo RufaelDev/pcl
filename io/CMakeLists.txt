@@ -20,8 +20,6 @@ if(build)
       # Set OPENNI2_FOUND to false locally to avoid building anything OpenNI 2 related
       # Remember that other modules (libraries) need to check explicitly for BUILD_OPENNI2
     set(OPENNI2_FOUND FALSE)
-	else(NOT BUILD_OPENNI2)
-	  set(OPENNI2_FOUND TRUE)
     endif()
     if(OPENNI2_FOUND)
       set(IMAGE_INCLUDES
@@ -226,7 +224,7 @@ if(build)
         src/robot_eye_grabber.cpp
         src/file_io.cpp
         src/io_exception.cpp
-		src/jpeg_io.cpp
+        src/jpeg_io.cpp
         ${VTK_IO_SOURCE}
         ${OPENNI_GRABBER_SOURCES}
         ${OPENNI2_GRABBER_SOURCES}
@@ -271,8 +269,7 @@ if(build)
         "include/pcl/${SUBSYS_NAME}/robot_eye_grabber.h"
         "include/pcl/${SUBSYS_NAME}/point_cloud_image_extractors.h"
         "include/pcl/${SUBSYS_NAME}/io_exception.h"
-		"include/pcl/${SUBSYS_NAME}/image_metadata_wrapper.h"
-		"include/pcl/${SUBSYS_NAME}/jpeg_io.h"
+        "include/pcl/${SUBSYS_NAME}/jpeg_io.h"
         ${VTK_IO_INCLUDES}
         ${OPENNI_GRABBER_INCLUDES}
         ${OPENNI2_GRABBER_INCLUDES}
@@ -325,9 +322,9 @@ if(build)
     link_directories(${VTK_LINK_DIRECTORIES})
     target_link_libraries("${LIB_NAME}" pcl_common pcl_io_ply ${VTK_LIBRARIES} )
     
-	if(WITH_JPEG)
+    if(WITH_JPEG)
       target_link_libraries("${LIB_NAME}" ${LIBJPEG_STATIC_LIB} ${LIBJPEG_TURBO_STATIC_LIB} )
-	  include_directories(${LIBJPEG_INCLUDE_DIR})
+      include_directories(${LIBJPEG_INCLUDE_DIR})
     endif(WITH_JPEG)
     
 	if(PNG_FOUND)

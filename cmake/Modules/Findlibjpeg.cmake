@@ -45,61 +45,61 @@ else (LIBJPEG_LIBRARIES AND LIBJPEG_INCLUDE_DIRS)
   
   find_library(LIBJPEG_LIBRARY
     NAMES
-      jpeg
+    jpeg
     PATHS ${LIBJPEG_LIBRARIES}
-	PATH_SUFFIXES lib
-	NO_DEFAULT_PATH
+    PATH_SUFFIXES lib
+    NO_DEFAULT_PATH
   )
   find_library(LIBJPEG_TURBO_LIBRARY
     NAMES
       turbojpeg
    PATHS ${LIBJPEG_LIBRARIES}
-	PATH_SUFFIXES lib
-	NO_DEFAULT_PATH
+    PATH_SUFFIXES lib
+    NO_DEFAULT_PATH
   )
   find_library(LIBJPEG_STATIC_LIB
     NAMES
-	 jpeg-static
+    jpeg-static
     PATHS ${LIBJPEG_LIBRARIES}
-	PATH_SUFFIXES lib
-	NO_DEFAULT_PATH
+    PATH_SUFFIXES lib
+    NO_DEFAULT_PATH
   )
   find_library(LIBJPEG_TURBO_STATIC_LIB
     NAMES
-	turbojpeg-static
+    turbojpeg-static
     PATHS ${LIBJPEG_LIBRARIES}
-	PATH_SUFFIXES lib
-	NO_DEFAULT_PATH
+    PATH_SUFFIXES lib
+    NO_DEFAULT_PATH
   )
   find_path(LIBJPEG_INCLUDE_DIR
     NAMES
-	jpeglib.h
+    jpeglib.h
     PATHS ${LIBJPEG_INCLUDE_DIRS}
-	NO_DEFAULT_PATH
-	)
+    NO_DEFAULT_PATH
+  )
   
   else(MSVC)
-	find_path(LIBJPEG_INCLUDE_DIR
+    find_path(LIBJPEG_INCLUDE_DIR
     NAMES
-	jpeglib.h
+    jpeglib.h
     PATHS
-	  /opt/libjpeg-turbo/include
-      /usr/include/libjpeg-turbo
-      /usr/include/libjpeg
-      /usr/local/include/libjpeg-turbo
-      /usr/local/include/libjpeg
-      /usr/include
+    /opt/libjpeg-turbo/include
+    /usr/include/libjpeg-turbo
+    /usr/include/libjpeg
+    /usr/local/include/libjpeg-turbo
+    /usr/local/include/libjpeg
+    /usr/include
     PATH_SUFFIXES
-	  libjpeg-turbo
-	  libjpeg
-	NO_DEFAULT_PATH
-	)
-	find_library(LIBJPEG_LIBRARY
+    libjpeg-turbo
+    libjpeg
+    NO_DEFAULT_PATH
+    )
+    find_library(LIBJPEG_LIBRARY
     NAMES
-      jpeg
-      jpeg62
+    jpeg
+    jpeg62
     PATHS
-	  /opt/libjpeg-turbo/lib
+      /opt/libjpeg-turbo/lib
       /usr/local/lib64
       /usr/lib/x86_64-linux-gnu
       /usr/lib/i386-linux-gnu
@@ -111,10 +111,10 @@ else (LIBJPEG_LIBRARIES AND LIBJPEG_INCLUDE_DIRS)
   )
   find_path(LIBJPEG_STATIC_DIR
     NAMES
-	libjpeg.a
-	libjpeg62.a
+    libjpeg.a
+    libjpeg62.a
     PATHS
-	  /opt/libjpeg-turbo/lib
+      /opt/libjpeg-turbo/lib
       /usr/local/lib64
       /usr/lib/x86_64-linux-gnu
       /usr/lib/i386-linux-gnu
@@ -138,27 +138,27 @@ endif(MSVC)
 # todo test on linux (CWI)
   
 if (LIBJPEG_INCLUDE_DIRS AND LIBJPEG_LIBRARIES)
-   set(LIBJPEG_FOUND TRUE)
+  set(LIBJPEG_FOUND TRUE)
 endif (LIBJPEG_INCLUDE_DIRS AND LIBJPEG_LIBRARIES)
 
 if (LIBJPEG_FOUND)
   if (NOT libjpeg_FIND_QUIETLY)
-      message(STATUS "Found libjpeg:")
-	  message(STATUS " - Includes: ${LIBJPEG_INCLUDE_DIRS}")
-	  message(STATUS " - Libraries: ${LIBJPEG_LIBRARIES}")
-	  if(LIBJPEG_STATIC_DIR)
-	  message(STATUS " - Static: ${LIBJPEG_STATIC_LIB}")
-	  else(LIBJPEG_STATIC_DIR)
-		SET(COMPILE_STATIC FALSE)
-	  endif(LIBJPEG_STATIC_DIR)
+    message(STATUS "Found libjpeg:")
+	message(STATUS " - Includes: ${LIBJPEG_INCLUDE_DIRS}")
+	message(STATUS " - Libraries: ${LIBJPEG_LIBRARIES}")
+	if(LIBJPEG_STATIC_DIR)
+	message(STATUS " - Static: ${LIBJPEG_STATIC_LIB}")
+	else(LIBJPEG_STATIC_DIR)
+      SET(COMPILE_STATIC FALSE)
+      endif(LIBJPEG_STATIC_DIR)
     endif (NOT libjpeg_FIND_QUIETLY)
-  else (LIBJPEG_FOUND)
-    if (libjpeg_FIND_REQUIRED)
-      message(FATAL_ERROR "Could not find libjpeg")
-    endif (libjpeg_FIND_REQUIRED)
-  endif (LIBJPEG_FOUND)
+else (LIBJPEG_FOUND)
+  if (libjpeg_FIND_REQUIRED)
+    message(FATAL_ERROR "Could not find libjpeg")
+  endif (libjpeg_FIND_REQUIRED)
+endif (LIBJPEG_FOUND)
 
-  # show the LIBFREENECT_INCLUDE_DIRS and LIBFREENECT_LIBRARIES variables only in the advanced view
-  mark_as_advanced(LIBJPEG_INCLUDE_DIRS LIBJPEG_LIBRARIES)
+# show the LIBFREENECT_INCLUDE_DIRS and LIBFREENECT_LIBRARIES variables only in the advanced view
+mark_as_advanced(LIBJPEG_INCLUDE_DIRS LIBJPEG_LIBRARIES)
   
 endif(LIBJPEG_LIBRARIES AND LIBJPEG_INCLUDE_DIRS)
