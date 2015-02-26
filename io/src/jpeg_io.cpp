@@ -243,7 +243,7 @@ pcl::io::JPEGWriter::writeJPEG(const PCLImage & im_in,
   // optional outfile
   FILE *l_o_file;
   if (write_file){
-    l_o_file = std::fopen(file_name.c_str(), "wb");
+    l_o_file = fopen(file_name.c_str(), "wb");
     
 	if(!l_o_file)
       return false;
