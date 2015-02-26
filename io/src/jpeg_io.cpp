@@ -129,7 +129,7 @@ pcl::io::JPEGReader::readJPEG(const std::vector < uint8_t >
       in_file = fopen(file_name.c_str(), "rb");
       jpeg_stdio_src(&cinfo, in_file);
 	  if(!in_file)
-		  return false;
+        return false;
     } 
     else {
       return false;	
@@ -242,8 +242,12 @@ pcl::io::JPEGWriter::writeJPEG(const PCLImage & im_in,
 
   // optional outfile
   FILE *l_o_file;
-  if (write_file)
+  if (write_file){
     l_o_file = std::fopen(file_name.c_str(), "wb");
+    
+	if(!l_o_file)
+      return false;
+  }
 
   // Now we can initialize the JPEG compression object.
   jpeg_create_compress(&cinfo);
