@@ -50,13 +50,13 @@ else (LIBJPEG_LIBRARIES AND LIBJPEG_INCLUDE_DIRS)
     PATH_SUFFIXES lib
     NO_DEFAULT_PATH
   )
-  find_library(LIBJPEG_TURBO_LIBRARY
-    NAMES
-      turbojpeg
-   PATHS ${LIBJPEG_LIBRARIES}
-    PATH_SUFFIXES lib
-    NO_DEFAULT_PATH
-  )
+#  find_library(LIBJPEG_TURBO_LIBRARY
+#    NAMES
+#      turbojpeg
+#   PATHS ${LIBJPEG_LIBRARIES}
+#    PATH_SUFFIXES lib
+#    NO_DEFAULT_PATH
+#  )
   find_library(LIBJPEG_STATIC_LIB
     NAMES
     jpeg-static
@@ -64,13 +64,13 @@ else (LIBJPEG_LIBRARIES AND LIBJPEG_INCLUDE_DIRS)
     PATH_SUFFIXES lib
     NO_DEFAULT_PATH
   )
-  find_library(LIBJPEG_TURBO_STATIC_LIB
-    NAMES
-    turbojpeg-static
-    PATHS ${LIBJPEG_LIBRARIES}
-    PATH_SUFFIXES lib
-    NO_DEFAULT_PATH
-  )
+#  find_library(LIBJPEG_TURBO_STATIC_LIB
+#    NAMES
+#    turbojpeg-static
+#    PATHS ${LIBJPEG_LIBRARIES}
+#    PATH_SUFFIXES lib
+#    NO_DEFAULT_PATH
+#  )
   find_path(LIBJPEG_INCLUDE_DIR
     NAMES
     jpeglib.h
@@ -84,9 +84,7 @@ else (LIBJPEG_LIBRARIES AND LIBJPEG_INCLUDE_DIRS)
     jpeglib.h
     PATHS
     /opt/libjpeg-turbo/include
-    /usr/include/libjpeg-turbo
     /usr/include/libjpeg
-    /usr/local/include/libjpeg-turbo
     /usr/local/include/libjpeg
     /usr/include
     PATH_SUFFIXES

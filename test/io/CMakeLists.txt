@@ -18,7 +18,7 @@ PCL_ADD_TEST (io_grabbers test_grabbers
 
 PCL_ADD_TEST (io_jpeg test_jpeg_io
               FILES test_jpeg_io.cpp
-              LINK_WITH pcl_gtest pcl_io pcl_common ${LIBJPEG_STATIC_LIB} ${LIBJPEG_TURBO_STATIC_LIB} 
+              LINK_WITH pcl_gtest pcl_io pcl_common ${LIBJPEG_STATIC_LIB} 
               ARGUMENTS "${PCL_SOURCE_DIR}/test/jpeg_sequences")			  
 			  
 			  

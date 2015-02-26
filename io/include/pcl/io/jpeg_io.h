@@ -1,6 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2014 Centrum Wiskunde Informatica.
  *  All rights reserved.
  *
@@ -38,7 +39,7 @@
 #include <pcl/PCLImage.h>
 
 /**!
-\brief jpeg reading and writing for PCL
+\brief jpeg reading and writing for PCL based on jpeg turbo
 \author Rufael Mekuria rufael.mekuria@cwi.nl
 */
 
@@ -51,67 +52,69 @@ namespace pcl
     /** \brief Class for writing jpeg buffers and files */
     class PCL_EXPORTS JPEGWriter
     {
-    public:
-      /** \brief function for writing an image as a compressed JPEG buffer
-      *  \param[in] im_in PCLImage input image
-      *  \param[in] jpeg_out  vector<uint8_t> containing compressed jpeg data
-      *  \param[in] quality quality value of jpeg to use (100 is best)
-      *  \return  returns true when succesfull
-      */
-      static bool
-      writeJPEG(const PCLImage &im_in, std::vector<uint8_t> &cdat, int quality = 75);
+      public:
+        /** \brief function for writing an image as a compressed JPEG buffer
+        *  \param[in] im_in PCLImage input image
+        *  \param[in] jpeg_out  vector<uint8_t> containing compressed jpeg data
+        *  \param[in] quality quality value of jpeg to use (100 is best)
+        *  \return  returns true when succesfull, false otherwise
+        */
+        static bool
+        writeJPEG(const PCLImage &im_in, std::vector<uint8_t> &cdat, int quality = 75);
 
-      /** \brief function for writing an image as a compressed JPEG buffer
-      *  \param[in] im_in PCLImage input image
-      *  \param[in] jpeg_out  vector<uint8_t> containing compressed jpeg data
-      *  \param[in] quality quality value of jpeg to use (100 is best)
-      *  \return  returns true when succesfull
-      */
-      static bool
-      writeJPEG(const PCLImage &im_in, const std::string &file_name, int quality = 75);
-
-      /** \brief generic function compressed JPEG buffer
-      *  \param[in] im_in PCLImage input image
-      *  \param[in] cdat  vector<uint8_t>
-      *  \param[in] file_name  std::string
-      *  \param[in] quality quality value of jpeg to use (100 is best)
-      *  \param[in] bool write file
-      *  \return  returns true when succesfull
-      */
-      static bool
-      writeJPEG(const PCLImage &im_in, std::vector<uint8_t> &cdat, const std::string &file_name, int quality, bool write_file);
+        /** \brief function for writing an image as a compressed JPEG buffer
+        *  \param[in] im_in PCLImage input image
+        *  \param[in] jpeg_out  vector<uint8_t> containing compressed jpeg data
+        *  \param[in] quality quality value of jpeg to use (100 is best)
+        *  \return  returns true when succesfull, false otherwise
+        */
+        static bool
+        writeJPEG(const PCLImage &im_in, const std::string &file_name, int quality = 75);
+    
+	  private:
+        /** \brief generic function compressed JPEG buffer
+        *  \param[in] im_in PCLImage input image
+        *  \param[in] cdat  vector<uint8_t>
+        *  \param[in] file_name  std::string
+        *  \param[in] quality quality value of jpeg to use (100 is best)
+        *  \param[in] bool write file
+        *  \return  returns true when succesfull
+        */
+        static bool
+        writeJPEG(const PCLImage &im_in, std::vector<uint8_t> &cdat, const std::string &file_name, int quality, bool write_file);
     };
 
     /** \brief Class for reading jpeg buffers and files */
     class PCL_EXPORTS JPEGReader
     {
-    public:
-      /** \brief function for reading a compressed JPEG buffer as a PCL image
+      public:
+        /** \brief function for reading a compressed JPEG buffer as a PCL image
         *  \param[in] jpeg_in_dat  vector<uint8_t> containing compressed jpeg
         *  \param[in] im_out PCLImage output image
-      *  \return  returns true when succesfull
+        *  \return  returns true when succesfull, false otherwise
         */
-      static bool
-      readJPEG(const std::vector<uint8_t> &jpeg_in_dat, PCLImage &im_out);
+        static bool
+        readJPEG(const std::vector<uint8_t> &jpeg_in_dat, PCLImage &im_out);
 
-      /** \brief function for reading a compressed JPEG file as a PCL image
-      *   \param[in] jpeg_in_file  string filename with compressed jpeg image
-      *   \param[in] im_out PCLImage output image
-      *   \return  returns true when succesfull
-      */
-      static bool
-      readJPEG(const std::string &jpeg_in_file, PCLImage &im_out);
-
-      /** \brief helper function for reading a compressed JPEG buffer/file as a PCL image
-      *   \param[in] jpeg_in_dat   characters  with compressed jpeg image
+        /** \brief function for reading a compressed JPEG file as a PCL image
         *   \param[in] jpeg_in_file  string filename with compressed jpeg image
-        *   \param[in] read_file bool  read file or from mem buffer
-      *   \param[in] im_out PCLImage output image
-        *   \return  returns true when succesfull
+        *   \param[in] im_out PCLImage output image
+        *   \return  returns true when succesfull, false otherwise
         */
-      static bool
-      readJPEG(const std::vector<uint8_t> &jpeg_in_dat, const std::string &jpeg_in_file, bool read_file, PCLImage &im_out);
+        static bool
+        readJPEG(const std::string &jpeg_in_file, PCLImage &im_out);
+
+	  private:
+        /** \brief helper function for reading a compressed JPEG buffer/file as a PCL image
+        *   \param[in] jpeg_in_dat   character membuffer  with compressed jpeg image
+        *   \param[in] jpeg_in_file  string filename with compressed jpeg image
+        *   \param[in] read_file bool  read file or from memmory buffer instead
+        *   \param[in] im_out PCLImage output image
+        *   \return  returns true when succesfull, false otherwise
+        */
+        static bool
+        readJPEG(const std::vector<uint8_t> &jpeg_in_dat, const std::string &jpeg_in_file, bool read_file, PCLImage &im_out);
     };
   }
 }
-#endif
+#endif // JPEG_IO_H

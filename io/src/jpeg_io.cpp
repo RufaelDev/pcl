@@ -33,18 +33,19 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 #include<pcl/io/jpeg_io.h>
 #include <jpeglib.h>
 #include <setjmp.h>
 #include <stdio.h>
 
-#include "pcl/io/io_exception.h"
-
 using namespace pcl;
 using namespace io;
 
+/////////////////// HELPERS FOR LIBJPEG ERROR HANDLING //////////////////////////////
+
 // JPEGLib struct for dealing with IO messages
-static struct JPEGIOErrorMgr 
+struct JPEGIOErrorMgr 
 {
   struct jpeg_error_mgr pub_;   /* "public" fields */
   jmp_buf setjmp_buffer_;       /* for return to caller */
@@ -54,17 +55,19 @@ static struct JPEGIOErrorMgr
 typedef struct JPEGIOErrorMgr *JPEGIOErrorPtr;
 
 // exit handler, from libjpeg turbo
-METHODDEF(void) my_error_exit(j_common_ptr cinfo)
+static void jpeg_error_return_false(j_common_ptr cinfo)
 {
   /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
   JPEGIOErrorPtr myerr = (JPEGIOErrorPtr) cinfo->err;
 
+  // let the jpeg lib display the error message (jpeg turbo)
   (*cinfo->err->output_message) (cinfo);
 
   // Return control to the setjmp point 
   longjmp(myerr->setjmp_buffer_, 1);
 }
 
+///////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// JPEG READER /////////////////////////////////////////
 bool 
@@ -90,22 +93,22 @@ pcl::io::JPEGReader::readJPEG(const std::vector < uint8_t >
                                    bool read_file, PCLImage & im_out)
 {
   // jpeg structures
-  struct jpeg_decompress_struct cinfo_;
-  struct JPEGIOErrorMgr jpeg_err_;
+  struct jpeg_decompress_struct cinfo;
+  struct JPEGIOErrorMgr jpeg_err;
 
   // set the error handlers
-  cinfo_.err = jpeg_std_error(&jpeg_err_.pub_);
-  jpeg_err_.pub_.error_exit = my_error_exit;
+  cinfo.err = jpeg_std_error(&jpeg_err.pub_);
+  jpeg_err.pub_.error_exit = jpeg_error_return_false;
 
   // establish setjump to return
-  if (setjmp(jpeg_err_.setjmp_buffer_)) 
+  if (setjmp(jpeg_err.setjmp_buffer_)) 
   {
-    // jpeg has signalled an error cleanup and return
-    jpeg_destroy_decompress(&cinfo_);
+    // jpeg has signalled an error, we cleanup and return false
+    jpeg_destroy_decompress(&cinfo);
     return false;
   }
   // Now we can initialize the JPEG decompression object
-  jpeg_create_decompress(&cinfo_);
+  jpeg_create_decompress(&cinfo);
 
   // optional file stream
   FILE *in_file;
@@ -113,49 +116,61 @@ pcl::io::JPEGReader::readJPEG(const std::vector < uint8_t >
   // specify data source to jpeg lib
   if (!read_file) 
   {
-    jpeg_mem_src(&cinfo_, (unsigned char *) jpeg_in_dat.data(),
-                 jpeg_in_dat.size());
+    if(jpeg_in_dat.size())
+      jpeg_mem_src(&cinfo, (unsigned char *) jpeg_in_dat.data(),
+                   jpeg_in_dat.size());
+	else
+      return false;
   } 
   else 
-  {
-    in_file = fopen(file_name.c_str(), "rb");
-    jpeg_stdio_src(&cinfo_, in_file);
+  {  
+    if(file_name.size())
+    {
+      in_file = fopen(file_name.c_str(), "rb");
+      jpeg_stdio_src(&cinfo, in_file);
+	  if(!in_file)
+		  return false;
+    } 
+    else {
+      return false;	
+    }
   }
 
   // read the header and start decompress
-  jpeg_read_header(&cinfo_, TRUE);
-  jpeg_start_decompress(&cinfo_);
+  jpeg_read_header(&cinfo, TRUE);
+  jpeg_start_decompress(&cinfo);
 
   // prepare to readout the image line by line with libjpeg turbo
-  int row_stride = cinfo_.output_width * cinfo_.output_components;
+  int row_stride = cinfo.output_width * cinfo.output_components;
   JSAMPARRAY buffer =
-      (*cinfo_.mem->alloc_sarray) ((j_common_ptr) & cinfo_, JPOOL_IMAGE,
+      (*cinfo.mem->alloc_sarray) ((j_common_ptr) & cinfo, JPOOL_IMAGE,
                                    row_stride, 1);
 
   // resize the output image
-  if (im_out.data.size() != row_stride * cinfo_.output_height)
-    im_out.data.resize(row_stride * cinfo_.output_height);
+  if (im_out.data.size() != row_stride * cinfo.output_height)
+    im_out.data.resize(row_stride * cinfo.output_height);
 
   /* Here we use the library's state variable cinfo.output_scanline as the
    * loop counter, so that we don't have to keep track ourselves.
    */
-  while (cinfo_.output_scanline < cinfo_.output_height) {
+  while (cinfo.output_scanline < cinfo.output_height) 
+  {
     // read a scanline and copy it to the output image
-    (void) jpeg_read_scanlines(&cinfo_, buffer, 1);
+    (void) jpeg_read_scanlines(&cinfo, buffer, 1);
     std::copy(buffer[0], buffer[0] + row_stride,
-              &im_out.data[row_stride * (cinfo_.output_scanline - 1)]);
+              &im_out.data[row_stride * (cinfo.output_scanline - 1)]);
   }
 
   // Finish decompression
-  (void) jpeg_finish_decompress(&cinfo_);
+  jpeg_finish_decompress(&cinfo);
 
   // return the image dimensions, output components
-  im_out.width = cinfo_.image_width;
-  im_out.height = cinfo_.image_height;
-  im_out.step = cinfo_.output_components;
+  im_out.width = cinfo.image_width;
+  im_out.height = cinfo.image_height;
+  im_out.step = cinfo.output_components;
 
   // set the color space to the output image
-  switch (cinfo_.out_color_space) {
+  switch (cinfo.out_color_space) {
   case (JCS_GRAYSCALE):
     im_out.encoding = "MONO";
     break;
@@ -202,16 +217,16 @@ pcl::io::JPEGWriter::writeJPEG(const PCLImage & im_in,
                                     int quality, bool write_file)
 {
   // structures for jpeg compression
-  struct jpeg_compress_struct cinfo_;
-  struct JPEGIOErrorMgr jpeg_err_;
+  struct jpeg_compress_struct cinfo;
+  struct JPEGIOErrorMgr jpeg_err;
 
   // set the error handlers
-  cinfo_.err = jpeg_std_error(&jpeg_err_.pub_);
-  jpeg_err_.pub_.error_exit = my_error_exit;
+  cinfo.err = jpeg_std_error(&jpeg_err.pub_);
+  jpeg_err.pub_.error_exit = jpeg_error_return_false;
 
   // data structures for writing the jpeg image (can be declared in the encoder routine)
   JSAMPROW row_pointer_[1];
-  int row_stride_;
+  int row_stride;
 
   // return if no data in the image
   if (!im_in.data.size())
@@ -225,68 +240,93 @@ pcl::io::JPEGWriter::writeJPEG(const PCLImage & im_in,
   unsigned long out_data_size = 0;
   unsigned char *out_buffer;
 
-  FILE *l_o_file = std::fopen(file_name.c_str(), "wb");
+  // optional outfile
+  FILE *l_o_file;
+  if (write_file)
+    l_o_file = std::fopen(file_name.c_str(), "wb");
 
-  /* Now we can initialize the JPEG compression object. */
-  jpeg_create_compress(&cinfo_);
+  // Now we can initialize the JPEG compression object.
+  jpeg_create_compress(&cinfo);
+
+  // establish setjump to return false
+  if (setjmp(jpeg_err.setjmp_buffer_)) 
+  {
+    // jpeg has signalled an error, we cleanup and return false
+    jpeg_destroy_compress(&cinfo);
+    return false;
+  }
 
   // either write the output file or write to a membuffer
-  if (!write_file) {
-    jpeg_mem_dest(&cinfo_, &out_buffer, &out_data_size);
-  } else {
-    if (l_o_file) {
-      jpeg_stdio_dest(&cinfo_, l_o_file);
-    } else {
+  if (!write_file) 
+    jpeg_mem_dest(&cinfo, &out_buffer, &out_data_size);
+  else 
+    if (l_o_file) 
+      jpeg_stdio_dest(&cinfo, l_o_file);
+    else 
       return false;
-    }
-  }
+
   // supply the image height and width to the codec
-  cinfo_.image_width = im_in.width;     /* image width and height, in pixels */
-  cinfo_.image_height = im_in.height;
+  cinfo.image_width = im_in.width;     /* image width and height, in pixels */
+  cinfo.image_height = im_in.height;
 
   // we only support YUV RGB as common in PCL
-  if (im_in.encoding.compare("YUV") == 0) {
-    cinfo_.in_color_space = JCS_RGB;
-    cinfo_.input_components = 3;
-  } else if (im_in.encoding.compare("RGB") == 0) {
-    cinfo_.in_color_space = JCS_RGB;
-    cinfo_.input_components = 3;
-  } else if (im_in.encoding.compare("MONO") == 0) {
-    cinfo_.in_color_space = JCS_GRAYSCALE;
-    cinfo_.input_components = 1;
-  } else if (im_in.encoding.compare("GRAY") == 0) {
-    cinfo_.in_color_space = JCS_GRAYSCALE;
-    cinfo_.input_components = 1;
-  } else {
-    cinfo_.in_color_space = JCS_RGB;
-    cinfo_.input_components = 3;
+  if (im_in.encoding.compare("YUV") == 0) 
+  {
+    cinfo.in_color_space = JCS_YCbCr;
+    cinfo.input_components = 3;
+  } 
+  else if (im_in.encoding.compare("RGB") == 0) 
+  {
+    cinfo.in_color_space = JCS_RGB;
+    cinfo.input_components = 3;
+  } 
+  else if (im_in.encoding.compare("MONO") == 0) 
+  {
+    cinfo.in_color_space = JCS_GRAYSCALE;
+    cinfo.input_components = 1;
+  } 
+  else if (im_in.encoding.compare("GRAY") == 0) 
+  {
+    cinfo.in_color_space = JCS_GRAYSCALE;
+    cinfo.input_components = 1;
+  } 
+  else 
+  {
+    cinfo.in_color_space = JCS_RGB; // default is RGB
+    cinfo.input_components = 3;
   }
 
-  // jpeg settings
-  jpeg_set_defaults(&cinfo_);   // 
-  jpeg_set_quality(&cinfo_, quality,
+  // do the jpeg settings
+  jpeg_set_defaults(&cinfo);   // 
+  jpeg_set_quality(&cinfo, quality,
                    TRUE /* limit to baseline-JPEG values */ );
-  jpeg_start_compress(&cinfo_, TRUE);   //
-  row_stride_ = im_in.width * cinfo_.input_components;  // JSAMPLEs per row in image_buffer 
+  jpeg_start_compress(&cinfo, TRUE);   //
+  row_stride = im_in.width * cinfo.input_components;  // JSAMPLEs per row in image_buffer 
 
   // scan lines and compress them
-  while (cinfo_.next_scanline < cinfo_.image_height) {
+  while (cinfo.next_scanline < cinfo.image_height) 
+  {
     row_pointer_[0] =
-        (unsigned char *) &im_in.data[(cinfo_.next_scanline) *
-                                      row_stride_];
-    (void) jpeg_write_scanlines(&cinfo_, row_pointer_, 1);
+        (unsigned char *) &im_in.data[(cinfo.next_scanline) *
+                                      row_stride];
+    jpeg_write_scanlines(&cinfo, row_pointer_, 1);
   }
+  
   // finished
-  jpeg_finish_compress(&cinfo_);
+  jpeg_finish_compress(&cinfo);
 
   // resize the output to match the actual datasize
-  if (!write_file) {
+  if (!write_file) 
+  {
     cdat.resize(out_data_size);
     std::copy((uint8_t *) out_buffer,
               (uint8_t *) (out_buffer + out_data_size), cdat.data());
   }
-  jpeg_destroy_compress(&cinfo_);
 
+  // destroy the libjpeg compression object
+  jpeg_destroy_compress(&cinfo);
+
+  // close the output file
   if (write_file)
     fclose(l_o_file);
 
