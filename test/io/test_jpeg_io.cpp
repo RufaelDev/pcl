@@ -51,15 +51,18 @@ string jpeg_dir;
 
 // for storing filenames and loaded images
 vector<pcl::PCLImage> ims_;
-vector<std::string> jpeg_files_;
+vector<string> jpeg_files_;
+
+typedef vector<pcl::PCLImage>::iterator img_it_t;
+typedef vector<string>::iterator str_it_t;
 
 TEST (PCL, JPEGReadAndWrite)
 {
   // load all the jpeg files
-  auto im_it = ims_.begin();
+  img_it_t im_it = ims_.begin();
   std::cout << " number of jpeg files " << jpeg_files_.size() << std::endl;
 
-  for(auto it = jpeg_files_.begin(); it != jpeg_files_.end(); ++it, ++im_it)
+  for(str_it_t it = jpeg_files_.begin(); it != jpeg_files_.end(); ++it, ++im_it)
   {
 	// load the image file
 	pcl::io::JPEGReader::readJPEG(*it, *im_it);
@@ -85,7 +88,8 @@ TEST (PCL, JPEGReadAndWrite)
     EXPECT_EQ(im_out.height,im_it->height) << " in and output not equal in width ";
       
     // write the output decoded file to the folder with jpeg files
-    std::string out_name = boost::filesystem::path(*it).parent_path().string() +"\\decoded\\decoded_" + boost::filesystem::path(*it).filename().string(); 
+    using boost::filesystem::path;
+    std::string out_name = (path(*it).parent_path() /= path("decoded") /= path("decoded_" + path(*it).filename().string())).string(); 
     bool res = pcl::io::JPEGWriter::writeJPEG(im_out, out_name );
     
     EXPECT_EQ((int)res,1) << " writing JPEG to file (JPEG Writer) failed";
@@ -143,7 +147,7 @@ main (int argc, char** argv)
 {
   if (argc < 2)
   {
-    std::cerr << "No test files were given. Please add the path to jpeg_sequences to this test. (see pcl\test\jpeg_sequences) " << std::endl;
+    std::cerr << "No folder with test files was given. Please add the path to jpeg_sequences to this test. (see pcl\\test\\jpeg_sequences) " << std::endl;
     return (-1);
   }
 
