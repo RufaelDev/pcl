@@ -52,6 +52,7 @@ string jpeg_dir;
 // for storing filenames and loaded images
 vector<pcl::PCLImage> ims_;
 vector<string> jpeg_files_;
+boost::filesystem::path outpath;
 
 typedef vector<pcl::PCLImage>::iterator img_it_t;
 typedef vector<string>::iterator str_it_t;
@@ -89,7 +90,7 @@ TEST (PCL, JPEGReadAndWrite)
       
     // write the output decoded file to the folder with jpeg files
     using boost::filesystem::path;
-    std::string out_name = (path(*it).parent_path() /= path("decoded") /= path("decoded_" + path(*it).filename().string())).string(); 
+	std::string out_name = (path(outpath) /= path("decoded_" + path(*it).filename().string())).string();
     bool res = pcl::io::JPEGWriter::writeJPEG(im_out, out_name );
     
     EXPECT_EQ((int)res,1) << " writing JPEG to file (JPEG Writer) failed";
@@ -151,9 +152,15 @@ main (int argc, char** argv)
     return (-1);
   }
 
-  std::string jpeg_sequences = argv[1];
-  jpeg_dir = jpeg_sequences;
-  
+  boost::filesystem::path jpeg_sequences = argv[1];
+  jpeg_dir = jpeg_sequences.string();
+
+  // Check whether the output dir is writable and can be created
+  using boost::filesystem::path;
+  outpath = jpeg_sequences /= path("decoded");
+  if (!boost::filesystem::is_directory(outpath)){
+	  boost::filesystem::create_directory(outpath);
+  }
   // Get jpeg files
   boost::filesystem::directory_iterator end_itr;
   for (boost::filesystem::directory_iterator itr (jpeg_dir); itr != end_itr; ++itr)
