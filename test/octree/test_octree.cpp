@@ -38,6 +38,7 @@
 #include <vector>
 
 #include <stdio.h>
+#include <sstream>
 
 using namespace std;
 
@@ -50,6 +51,11 @@ using namespace pcl;
 #include <pcl/octree/octree.h>
 #include <pcl/octree/octree_impl.h>
 #include <pcl/octree/octree_pointcloud_adjacency.h>
+#include <pcl/compression/octree_pointcloud_compression.h>
+#include <pcl/compression/impl/octree_pointcloud_compression.hpp>
+
+#include <pcl/compression/color_coding_graph_transform.h>
+#include <pcl/compression/impl/color_coding_graph_transform_impl.hpp>
 
 using namespace octree;
 
@@ -928,12 +934,31 @@ TEST (PCL, Octree_Pointcloud_Iterator_Test)
   OctreePointCloud<PointXYZ>::Iterator it2;
   OctreePointCloud<PointXYZ>::Iterator it2_end = octreeA.end();
 
+  int leaf_count_per_level = 0;
+  int cum_leaf_count = 0;
+
   unsigned int traversCounter = 0;
   for (it2 = octreeA.begin(); it2 != it2_end; ++it2)
   {
+    //std::cout << it2.getCurrentOctreeDepth ()<<std::endl;
+    
+    if(it2.isLeafNode())
+      leaf_count_per_level++;
+
+    if(it2.getCurrentOctreeDepth() == 3){
+      std::cout << leaf_count_per_level << std::endl;
+      std::cout << " , "<< it2.getCurrentOctreeKey().x
+      << " , " << it2.getCurrentOctreeKey().y 
+      <<" ," << it2.getCurrentOctreeKey().z 
+      << std::endl;
+      cum_leaf_count+=leaf_count_per_level;
+      leaf_count_per_level=0;
+    }
+
     traversCounter++;
   }
-
+  cum_leaf_count+=leaf_count_per_level;
+  ASSERT_EQ(cum_leaf_count,octreeA.getLeafCount());
   ASSERT_EQ(octreeA.getLeafCount() + octreeA.getBranchCount(), traversCounter);
 
   // breadth-first iterator test
@@ -970,7 +995,38 @@ TEST (PCL, Octree_Pointcloud_Iterator_Test)
   // check if every branch node and every leaf node has been visited
   ASSERT_EQ( leafNodeCount, octreeA.getLeafCount());
   ASSERT_EQ( branchNodeCount, octreeA.getBranchCount());
+}
 
+TEST (PCL, Octree_GraphTransform)
+{
+  PointCloud<PointXYZRGB>::Ptr cloudInRGB (new PointCloud<PointXYZRGB> ());
+
+  for (float z = 0.05f; z < 7.0f; z += 0.1f)
+    for (float y = 0.05f; y < 7.0f; y += 0.1f)
+      for (float x = 0.05f; x < 7.0f; x += 0.1f){
+        PointXYZRGB pt; 
+        pt.x=x; 
+        pt.y=y;
+        pt.z=z; 
+        cloudInRGB->points.push_back(pt);
+      }
+
+  cloudInRGB->width = static_cast<uint32_t> (cloudInRGB->points.size ());
+  cloudInRGB->height = 1;
+
+  io::OctreePointCloudCompression<PointXYZRGB> *coder = new io::OctreePointCloudCompression<PointXYZRGB>(); // low resolution
+  
+  // add point data to octree
+  coder->setInputCloud (cloudInRGB);
+  coder->addPointsFromInputCloud ();
+  
+  Octree2BufBase<OctreeContainerPointIndices> *o2bp = (Octree2BufBase<OctreeContainerPointIndices> *)coder;
+
+  colorCodingGraphTF<PointXYZRGB,OctreeContainerPointIndices,OctreeContainerEmpty,Octree2BufBase<OctreeContainerPointIndices,OctreeContainerEmpty>> enc2;
+
+  enc2.encodeColors(*o2bp,*cloudInRGB,3,0);
+
+  enc2.encodeColors(*o2bp,*cloudInRGB,2,0);
 }
 
 TEST(PCL, Octree_Pointcloud_Occupancy_Test)
@@ -1706,4 +1762,3 @@ main (int argc, char** argv)
   testing::InitGoogleTest (&argc, argv);
   return (RUN_ALL_TESTS ());
 }
-/* ]--- */

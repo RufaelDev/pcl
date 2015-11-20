@@ -448,7 +448,7 @@ namespace pcl
                          std::vector<LeafContainerT*>& leaf_container_vector_arg,
                          bool do_XOR_decoding_arg = false);
 
-      protected:
+      //protected:
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Protected octree methods based on octree keys

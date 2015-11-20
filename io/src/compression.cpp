@@ -42,15 +42,20 @@
 #include <pcl/octree/octree.h>
 #include <pcl/octree/octree_impl.h>
 
+#include <pcl/compression/color_coding_graph_transform.h>
+
 #include <pcl/compression/entropy_range_coder.h>
 #include <pcl/compression/impl/entropy_range_coder.hpp>
 
 #include <pcl/compression/octree_pointcloud_compression.h>
 #include <pcl/compression/impl/octree_pointcloud_compression.hpp>
+#include <pcl/compression/impl/color_coding_graph_transform_impl.hpp>
 
 template class PCL_EXPORTS pcl::io::OctreePointCloudCompression<pcl::PointXYZ>;
 template class PCL_EXPORTS pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB>;
 template class PCL_EXPORTS pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>;
+template class PCL_EXPORTS pcl::octree::colorCodingGraphTF<pcl::PointXYZRGB>;
+template class PCL_EXPORTS pcl::octree::colorCodingGraphTF<pcl::PointXYZRGB,pcl::octree::OctreeContainerPointIndices,OctreeContainerEmpty,OctreeBase<OctreeContainerPointIndices, OctreeContainerEmpty>>;
 
 #ifdef HAVE_PNG
 #ifdef HAVE_OPENNI

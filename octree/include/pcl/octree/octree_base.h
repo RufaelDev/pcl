@@ -78,6 +78,7 @@ namespace pcl
         friend class OctreeDepthFirstIterator<OctreeT> ;
         friend class OctreeBreadthFirstIterator<OctreeT> ;
         friend class OctreeLeafNodeIterator<OctreeT> ;
+        friend class OctreeLevelNIterator<OctreeT> ;
 
         // Octree default iterators
         typedef OctreeDepthFirstIterator<OctreeT> Iterator;

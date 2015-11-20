@@ -282,6 +282,7 @@ if(build)
         include/pcl/compression/compression_profiles.h
         include/pcl/compression/entropy_range_coder.h
         include/pcl/compression/point_coding.h
+		include/pcl/compression/color_coding_graph_transform.h
        )
     if(PNG_FOUND)
       list(APPEND compression_incs
@@ -303,6 +304,7 @@ if(build)
         "include/pcl/${SUBSYS_NAME}/impl/point_cloud_image_extractors.hpp"
         include/pcl/compression/impl/entropy_range_coder.hpp
         include/pcl/compression/impl/octree_pointcloud_compression.hpp
+		include/pcl/compression/impl/color_coding_graph_transform_impl.hpp
         ${VTK_IO_INCLUDES_IMPL}
        )
     if(PNG_FOUND AND (WITH_OPENNI OR WITH_OPENNI2))

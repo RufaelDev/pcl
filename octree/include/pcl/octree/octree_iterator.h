@@ -50,6 +50,7 @@
 #include <pcl/point_types.h>
 
 #include <iterator>
+#include <Eigen/Core>
 
 // Ignore warnings in the above headers
 #ifdef __GNUC__
@@ -545,7 +546,7 @@ namespace pcl
          */
         explicit
         OctreeLeafNodeIterator (unsigned int max_depth_arg = 0) :
-            OctreeDepthFirstIterator<OctreeT> (max_depth_arg)
+            OctreeDepthFirstIterator<OctreeT> (max_depth_arg), levelN_(0)
         {
           reset ();
         }
@@ -585,10 +586,24 @@ namespace pcl
           do
           {
             OctreeDepthFirstIterator<OctreeT>::operator++ ();
+            //if(this->current_state_->depth_ == levelN_)
+            //  last_level_key_=this->current_state_->key_;
           } while ((this->current_state_) && (this->current_state_->node_->getNodeType () != LEAF_NODE));
 
           return (*this);
         }
+        
+        //OctreeKey &
+        //getLevelKey()
+        //{
+        //  return last_level_key_;
+        //}
+
+        //void
+        //setTopLevel(int n){
+        //  if(this-> max_octree_depth_ - n > 0)
+        //  levelN_ = this-> max_octree_depth_ - n;
+        //}
 
         /** \brief postincrement operator.
          * \note step to next octree node
@@ -614,10 +629,161 @@ namespace pcl
             ret = this->current_state_->node_;
           return (ret);
         }
+
+        OctreeKey last_level_key_;
+
+        int levelN_;
       };
 
+     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /** \brief Octree LevelN iterator class
+     * \note This class implements a forward iterator for traversing the NLEVEL of the octree data structure.
+     * \ or each level this iterator can return all the leafs and the adjacency matrix for coding using graph transform
+     * \ingroup octree
+     * \author Rufael Mekuria (rufael.mekuria@cwi.nl)
+     */
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    template<typename OctreeT>
+      class OctreeLevelNIterator : public OctreeDepthFirstIterator<OctreeT>
+      {
+        typedef typename OctreeDepthFirstIterator<OctreeT>::BranchNode BranchNode;
+        typedef typename OctreeDepthFirstIterator<OctreeT>::LeafNode LeafNode;
+      
+      public:
+        
+        /** \brief Empty constructor.
+         * \param[in] max_depth_arg Depth limitation during traversal
+         */
+        explicit
+        OctreeLevelNIterator (int levelN=0 /* bottom up octree level*/, unsigned int max_depth_arg = 0) :
+            OctreeDepthFirstIterator<OctreeT> (max_depth_arg)
+        {
+          reset ();
+          //assert(levelN < max_octree_depth_);
+          levelN_ = (max_octree_depth_ - levelN);  /* top down octree level */
+        }
+
+        /** \brief Constructor.
+         * \param[in] octree_arg Octree to be iterated. Initially the iterator is set to its root node.
+         * \param[in] max_depth_arg Depth limitation during traversal
+         */
+        explicit
+        OctreeLevelNIterator (OctreeT* octree_arg,int levelN /* bottom up octree level*/, unsigned int max_depth_arg = 0) :
+            OctreeDepthFirstIterator<OctreeT> (octree_arg, max_depth_arg)
+        {
+          reset ();
+          assert(levelN < this->max_octree_depth_);
+          levelN_ = (this-> max_octree_depth_ - levelN); /* top down octree level */
+        }
+
+        /** \brief Empty deconstructor. */
+        virtual
+        ~OctreeLevelNIterator ()
+        {
+        }
+
+        /** \brief Reset the iterator to the root node of the octree
+         */
+        inline void
+        reset ()
+        {
+          OctreeDepthFirstIterator<OctreeT>::reset ();
+          //OctreeDepthFirstIterator<OctreeT>::operator++ ();
+        }
+
+        /** \brief Preincrement operator.
+         * \note recursively step to next octree Level
+         */
+        inline OctreeLevelNIterator&
+        operator++ ()
+        {
+          do
+          {
+            OctreeDepthFirstIterator<OctreeT>::operator++ ();
+          } while ((this->current_state_) && (this->getCurrentOctreeDepth() != levelN_));
+
+          octree_keys_in_current_level_.clear();
+          octree_leaf_nodes_in_current_level_.clear();
+
+          if(!((this->current_state_) && (this->getCurrentOctreeDepth() == levelN_)))
+            return (*this);
+
+          //this->octree_->getVoxelBounds ( *((const pcl::octree::OctreeIteratorBase<OctreeT> *) this), level_min_pt_, level_max_pt_);
+          top_level_key_ = this->current_state_->key_;
+
+          do
+          {
+            if((this->current_state_) && (this->current_state_->node_->getNodeType () == LEAF_NODE))
+            {
+              octree_keys_in_current_level_.push_back(this->current_state_->key_);
+              octree_leaf_nodes_in_current_level_.push_back(this->current_state_->node_);
+            }
+            OctreeDepthFirstIterator<OctreeT>::operator++ ();
+          } while ((this->current_state_) && (this->getCurrentOctreeDepth() > levelN_));
+
+          return (*this);
+        }
+
+        /** \brief postincrement operator.
+         * \note step to next octree node
+         */
+        inline OctreeLevelNIterator
+        operator++ (int)
+        {
+          OctreeLevelNIterator _Tmp = *this;
+          ++*this;
+          return (_Tmp);
+        }
+
+        /** \brief *operator.
+         * \return pointer to the current octree leaf node
+         */
+        OctreeNode*
+        operator* () const
+        {
+          // return designated object
+          OctreeNode* ret = 0;
+
+          if (this->current_state_ && (this->current_state_->node_->getNodeType () == LEAF_NODE))
+            ret = this->current_state_->node_;
+          return (ret);
+        }
+
+
+        /** \brief *operator.
+         * \return leaf nodes in current level
+         */
+        std::vector<OctreeNode *> &
+        getLeafNodesInCurrentLevel()
+        {
+          return octree_leaf_nodes_in_current_level_;
+        }
+
+        void
+        getLevelBounds(Eigen::Vector3f &mnpt,Eigen::Vector3f &mxpt){
+          mnpt = level_min_pt_;
+          mxpt = level_max_pt_;
+        }
+        
+        OctreeKey
+        getTopLevelKey(){
+          return top_level_key_;
+        }
+
+      protected:
+
+        int levelN_;
+
+        std::vector<OctreeKey> octree_keys_in_current_level_;
+
+        std::vector<OctreeNode *> octree_leaf_nodes_in_current_level_;
+
+        Eigen::Vector3f level_min_pt_, level_max_pt_;
+
+        OctreeKey top_level_key_;
+      
+    };  
   }
 }
 
 #endif
-
